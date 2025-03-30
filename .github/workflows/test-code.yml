@@ -1,3 +1,68 @@
+# name: Automated Code Testing
+
+# on:
+#   push:
+#     branches: [ main, master ]
+#   pull_request:
+#     branches: [ main, master ]
+
+# jobs:
+#   test-code:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 0  # This ensures we have full git history
+      
+#       - name: Detect language and run appropriate tests
+#         run: |
+#           # Alternative way to detect changed files
+#           if [ "${{ github.event_name }}" == "pull_request" ]; then
+#             # For pull requests
+#             git fetch origin ${{ github.base_ref }}
+#             FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }})
+#           else
+#             # For direct pushes
+#             git fetch
+#             FILES_CHANGED=$(git diff --name-only HEAD^ HEAD || git ls-files)
+#           fi
+          
+#           echo "Files changed: $FILES_CHANGED"
+          
+#           # Check for Python solution
+#           if echo "$FILES_CHANGED" | grep -q "3sum.py"; then
+#             echo "Python solution detected, running Python tests..."
+#             python 3sumtest.py
+#           fi
+          
+#           # Check for C solution
+#           if echo "$FILES_CHANGED" | grep -q "3sum.c"; then
+#             echo "C solution detected, running C tests..."
+#             gcc -o 3sum_test 3sum.c 3sumtest.c
+#             ./3sum_test
+#           fi
+          
+#           # Check for C++ solution
+#           if echo "$FILES_CHANGED" | grep -q "3sum.cpp"; then
+#             echo "C++ solution detected, running C++ tests..."
+#             g++ -o 3sum_test 3sum.cpp 3sumtest.cpp
+#             ./3sum_test
+#           fi
+          
+#           # Check for Java solution
+#           if echo "$FILES_CHANGED" | grep -q "3sum.java"; then
+#             echo "Java solution detected, running Java tests..."
+#             javac 3sum.java 3sumtest.java
+#             java 3sumtest
+#           fi
+
+
+
+
+
+
+
+
 name: Automated Code Testing
 
 on:
@@ -12,46 +77,70 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # This ensures we have full git history
-      
+          fetch-depth: 0  # Ensures full git history
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential openjdk-11-jdk
+
       - name: Detect language and run appropriate tests
         run: |
-          # Alternative way to detect changed files
+          # Detect changed files
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            # For pull requests
             git fetch origin ${{ github.base_ref }}
-            FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }})
+            FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }} HEAD)
           else
-            # For direct pushes
             git fetch
-            FILES_CHANGED=$(git diff --name-only HEAD^ HEAD || git ls-files)
+            FILES_CHANGED=$(git diff --name-only HEAD~1 HEAD || git ls-files)
           fi
           
-          echo "Files changed: $FILES_CHANGED"
+          echo "Files changed:"
+          echo "$FILES_CHANGED"
           
           # Check for Python solution
           if echo "$FILES_CHANGED" | grep -q "3sum.py"; then
             echo "Python solution detected, running Python tests..."
-            python 3sumtest.py
+            if [ -f "3sumtest.py" ]; then
+                python 3sumtest.py
+            else
+                echo "❌ Error: 3sumtest.py is missing!"
+                exit 1
+            fi
           fi
           
           # Check for C solution
           if echo "$FILES_CHANGED" | grep -q "3sum.c"; then
             echo "C solution detected, running C tests..."
-            gcc -o 3sum_test 3sum.c 3sumtest.c
-            ./3sum_test
+            if [ -f "3sum.c" ] && [ -f "3sumtest.c" ]; then
+                gcc -o 3sum_test 3sum.c 3sumtest.c
+                ./3sum_test
+            else
+                echo "❌ Error: 3sum.c or 3sumtest.c is missing!"
+                exit 1
+            fi
           fi
           
           # Check for C++ solution
           if echo "$FILES_CHANGED" | grep -q "3sum.cpp"; then
             echo "C++ solution detected, running C++ tests..."
-            g++ -o 3sum_test 3sum.cpp 3sumtest.cpp
-            ./3sum_test
+            if [ -f "3sum.cpp" ] && [ -f "3sumtest.cpp" ]; then
+                g++ -o 3sum_test 3sum.cpp 3sumtest.cpp
+                ./3sum_test
+            else
+                echo "❌ Error: 3sum.cpp or 3sumtest.cpp is missing!"
+                exit 1
+            fi
           fi
           
           # Check for Java solution
           if echo "$FILES_CHANGED" | grep -q "3sum.java"; then
             echo "Java solution detected, running Java tests..."
-            javac 3sum.java 3sumtest.java
-            java 3sumtest
+            if [ -f "3sum.java" ] && [ -f "3sumtest.java" ]; then
+                javac 3sum.java 3sumtest.java
+                java 3sumtest
+            else
+                echo "❌ Error: 3sum.java or 3sumtest.java is missing!"
+                exit 1
+            fi
           fi
