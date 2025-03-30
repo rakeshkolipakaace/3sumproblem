@@ -74,7 +74,7 @@ def test(nums, expected):
     print("---------------------------------------------")
     return passed
 
-if _name_ == "_main_":
+    if __name__ == "__main__":
     all_passed = True
     
     all_passed &= test([-1, 0, 1, 2, -1, -4], [[-1, -1, 2], [-1, 0, 1]])
