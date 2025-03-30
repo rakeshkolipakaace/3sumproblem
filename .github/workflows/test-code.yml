@@ -11,15 +11,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # This ensures we have full git history
       
       - name: Detect language and run appropriate tests
         run: |
-          # Find which files were modified
-          if [ "${{ github.event_name }}" == "push" ]; then
-            FILES_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
+          # Alternative way to detect changed files
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For pull requests
+            git fetch origin ${{ github.base_ref }}
+            FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }})
           else
-            FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }} origin/${{ github.head_ref }})
+            # For direct pushes
+            git fetch
+            FILES_CHANGED=$(git diff --name-only HEAD^ HEAD || git ls-files)
           fi
+          
+          echo "Files changed: $FILES_CHANGED"
           
           # Check for Python solution
           if echo "$FILES_CHANGED" | grep -q "3sum.py"; then
