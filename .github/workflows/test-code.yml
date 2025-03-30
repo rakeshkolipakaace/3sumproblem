@@ -1,0 +1,49 @@
+name: Automated Code Testing
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Detect language and run appropriate tests
+        run: |
+          # Find which files were modified
+          if [ "${{ github.event_name }}" == "push" ]; then
+            FILES_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
+          else
+            FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }} origin/${{ github.head_ref }})
+          fi
+          
+          # Check for Python solution
+          if echo "$FILES_CHANGED" | grep -q "3sum.py"; then
+            echo "Python solution detected, running Python tests..."
+            python 3sumtest.py
+          fi
+          
+          # Check for C solution
+          if echo "$FILES_CHANGED" | grep -q "3sum.c"; then
+            echo "C solution detected, running C tests..."
+            gcc -o 3sum_test 3sum.c 3sumtest.c
+            ./3sum_test
+          fi
+          
+          # Check for C++ solution
+          if echo "$FILES_CHANGED" | grep -q "3sum.cpp"; then
+            echo "C++ solution detected, running C++ tests..."
+            g++ -o 3sum_test 3sum.cpp 3sumtest.cpp
+            ./3sum_test
+          fi
+          
+          # Check for Java solution
+          if echo "$FILES_CHANGED" | grep -q "3sum.java"; then
+            echo "Java solution detected, running Java tests..."
+            javac 3sum.java 3sumtest.java
+            java 3sumtest
+          fi
